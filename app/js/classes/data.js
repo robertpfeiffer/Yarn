@@ -38,7 +38,7 @@ var data =
 		else if (window.File && window.FileReader && window.FileList && window.Blob && e.target && e.target.files && e.target.files.length > 0)
 		{
 			var reader  = new FileReader();
-			reader.onloadend = function(e) 
+			reader.onloadend = function(e)
 			{
 				if (e.srcElement && e.srcElement.result && e.srcElement.result.length > 0)
 				{
@@ -93,7 +93,7 @@ var data =
 		// is json?
 		if (/^[\],:{}\s]*$/.test(clone.replace(/\\["\\\/bfnrtu]/g, '@').
 			replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
-			replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) 
+			replace(/(?:^|:|,)(?:\s*\[)+/g, '')))
 			return FILETYPE.JSON;
 
 		// is xml?
@@ -275,7 +275,7 @@ var data =
 		{
 			var node = new Node();
 			app.nodes.push(node);
-			
+
 			var object = objects[i]
 			if (object.title != undefined)
 				node.title(object.title);
@@ -288,7 +288,7 @@ var data =
 				node.x(object.position.x);
 				avgX += object.position.x;
 				numAvg ++;
-			}	
+			}
 			if (object.position != undefined && object.position.y != undefined)
 			{
 				node.y(object.position.y);
@@ -316,8 +316,8 @@ var data =
 		for (var i = 0; i < nodes.length; i ++)
 		{
 			content.push({
-				"title": nodes[i].title(), 
-				"tags": nodes[i].tags(), 
+				"title": nodes[i].title(),
+				"tags": nodes[i].tags(),
 				"body": nodes[i].body(),
 				"position": { "x": nodes[i].x(), "y": nodes[i].y() },
 				"colorID": nodes[i].colorID()
@@ -392,7 +392,7 @@ var data =
 	{
 		if (app.fs != undefined)
 		{
-			app.fs.writeFile(path, content, {encoding: 'utf-8'}, function(err) 
+			app.fs.writeFile(path, content, {encoding: 'utf-8'}, function(err)
 			{
 				data.editingPath(path);
 				if(err)
@@ -425,9 +425,46 @@ var data =
 		dialog.trigger("click");
 	},
 
+	openFileBrowser: function() {
+                var form = document.createElement("form");
+                var fileinput = document.createElement("input");
+                fileinput.setAttribute('type', "file");
+
+                function fileselect(event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        fileinput.removeEventListener('change', fileselect);
+
+                        var loadfile = event.target.files[0];
+                        var reader = new FileReader();
+
+                        reader.onload = function (e) {
+
+				var type = data.getFileType(loadfile.name);
+				if (type == FILETYPE.UNKNOWN)
+					alert("Unknown filetype!");
+
+				data.editingPath(loadfile.name);
+				data.editingType(type);
+
+				data.loadData(e.target.result, type, true);
+
+                        };
+                        reader.readAsText(loadfile);
+                }
+
+                form.appendChild(fileinput);
+                document.body.appendChild(form);
+
+		fileinput.addEventListener('change', fileselect, false);
+		fileinput.click();
+
+		form.remove();
+	},
+
 	saveFileDialog: function(dialog, type, content)
 	{
-		var file = 'file.' + type;
+		var file = data.editingPath()+'.yarn.' + type;
 
 		if (app.fs)
 		{
@@ -441,23 +478,34 @@ var data =
 		else
 		{
 			switch(type) {
-				case 'json':
-					content = "data:text/json," + content;
-					break;
-				case 'xml':
-					content = "data:text/xml," + content;
-					break;
-				default:
-					content = "data:text/plain," + content;
-					break;
+			case 'json':
+				content = "data:text/json," + content;
+				break;
+			case 'xml':
+				content = "data:text/xml," + content;
+				break;
+			default:
+				content = "data:text/plain," + content;
+				break;
 			}
-			window.open(content, "_blank");
+
+		        var link = document.createElement("a");
+                        link.download = file;
+                        link.href = content;
+   		        document.body.appendChild(link)
+                        link.click();
+		        link.remove();
 		}
 	},
 
 	tryOpenFile: function()
 	{
-		data.openFileDialog($('#open-file'), data.openFile);
+		if (app.fs != undefined){
+			data.openFileDialog($('#open-file'), data.openFile);
+		} else {
+			data.openFileBrowser();
+
+		}
 	},
 
 	tryOpenFolder: function()
