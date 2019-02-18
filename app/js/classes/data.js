@@ -428,7 +428,9 @@ var data =
 	openFileBrowser: function() {
                 var form = document.createElement("form");
                 var fileinput = document.createElement("input");
+
                 fileinput.setAttribute('type', "file");
+		fileinput.setAttribute('accept', "application/json,application/xml,.twee,.yarn.txt,.tw2");
 
                 function fileselect(event) {
                         event.stopPropagation();
@@ -464,7 +466,8 @@ var data =
 
 	saveFileDialog: function(dialog, type, content)
 	{
-		var file = data.editingPath()+'.yarn.' + type;
+		var file = data.editingPath().split('.')[0];
+		file = file + '.' + type;
 
 		if (app.fs)
 		{
